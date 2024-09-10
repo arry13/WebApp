@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "express": "^4.20.0",
+    "multer": "^1.4.5-lts.1",
+    "slsx": "^0.0.3",
+    "xlsx": "^0.18.5"
+  }
+}
