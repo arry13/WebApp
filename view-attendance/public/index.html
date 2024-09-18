@@ -14,7 +14,7 @@
     </header>
 
     <div class="container">
-        <label id="selectmonth"for="monthSelect">Select Month:</label>
+        <label id="selectmonth"for="monthSelect"><b>Select Month:</b></label>
         <select id="monthSelect" onchange ="fetchData()">
             <option value="">--Select Month--</option>
              <option value="January">January</option>
@@ -32,11 +32,11 @@
 
 
         </select>
-
+    </div>
         
-
-
-        <table id="dataTable" style="display:none;">
+    
+    <div class="container1">
+        <table class="table1" id="dataTable" style="display:none;">
             <thead>
                 <tr>
                     <th>Employee Name</th>
@@ -50,96 +50,174 @@
             </thead>
             <tbody></tbody>
         </table>
-
-        <table id="dataTable1" style="display:none;">
+     </div>
+     <div class="tablecalc">
+        <table class="table2" id="dataTable1" style="display:none;">
             <thead>
                 <tr>
                     <th>Capacity</th>
                     <th>Efforts</th>
                     <th>Utilization</th>
-                    
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
-    </div>
+    
+  
 
-    <script>
-        function fetchData() {
+    
+        <div class="container2" style="display: none;" id="bandwidth">
+            <table><thead><tr id="bandwidth"><th>Bandwidth Calculator</th></tr></thead></table> <br>
+        
+            <div class="input-row">
+                <label for="simple-request">Simple:</label>
+                <input type="number" id="simple-request" value="0">
+            </div>
+        
+            <div class="input-row">
+                <label for="medium-request">Medium:</label>
+                <input type="number" id="medium-request" value="0">
+            </div>
+        
+            <div class="input-row">
+                <label for="complex-request">Complex:</label>
+                <input type="number" id="complex-request" value="0">
+            </div>
+        
+            <center><button onclick="calculate()">Calculate</button></center>
+        </div>
+        
+        </div> 
+        <div style="display:none"id="result"></div>
+     
+ 
+
+
+<script>
+   function fetchData() {
             const Month = document.getElementById('monthSelect').value;
             if (!Month) {
-                alert('Please select a month.');
-                return;
+              alert('Please select a month.');
+              return;
             }
 
-            // Fetch data from the backend
-            fetch(`/fetch-data?Month=${Month}`)
-                .then(response => response.json())
-                .then(data => {
-                    // Clear existing table rows
-                    const tbody = document.querySelector('#dataTable tbody');
-                    tbody.innerHTML = '';
+      // Fetch data from the backend (single fetch call)
+        fetch(`/fetch-data?Month=${Month}`)
+        .then(response => response.json())
+        .then(data => {
+            // Clear existing table rows for Attendance and Capacity
+            const tbodyAttendance = document.querySelector('#dataTable tbody');
+            tbodyAttendance.innerHTML = '';
+            const tbodyCapacity = document.querySelector('#dataTable1 tbody');
+            tbodyCapacity.innerHTML = '';
 
-                    if (data.length === 0) {
-                        alert('No data found for the selected month.');
-                        document.getElementById('dataTable').style.display = 'none';
-                        return;
-                    }
-
-                    // Populate the table with the fetched data
-                    data.forEach(row => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${row['Employee Name']}</td>
-                            <td>${row['Month']}</td>
-                            <td>${row['Working Days']}</td>
-                            <td>${row['Leaves']}</td>
-                            <td>${row['Net Working Days']}</td>
-                            <td>${row['Jira Tickets']}</td>
-                            <td>${row['Utilization (%)']}</td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-
-                    // Display the table
-                    document.getElementById('dataTable').style.display = 'table';
-                })
-
-                //Fetch from capacity
-                fetch(`/fetch1-data?Month=${Month}`)
-                .then(response => response.json())
-                .then(data1 => {
-                    // Clear existing table rows
-                    const tbody = document.querySelector('#dataTable1 tbody');
-                    tbody.innerHTML = '';
-
-                    if (data1.length === 0) {
-                        alert('No data found for the selected month.');
-                        document.getElementById('dataTable1').style.display = 'none';
-                        return;
-                    }
-
-                    // Populate the table with the fetched data
-                    data1.forEach(row => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${row['Capacity']}</td>
-                            <td>${row['Efforts']}</td>
-                            <td>${row['Utilization']}</td>
-                            
-                        `;
-                        tbody.appendChild(tr);
-                    });
-
-                    // Display the table
-                    document.getElementById('dataTable1').style.display = 'table';
-                })
-              
-                .catch(error => {
-                    console.error('Error fetching data:', error);
-                    alert('An error occurred while fetching data.');
+            // Handle Attendance data
+            if (data.attendance.length === 0) {
+                alert('No attendance data found for the selected month.');
+                document.getElementById('dataTable').style.display = 'none';
+                document.getElementById('bandwidth').style.display ='none';
+            } else {
+                data.attendance.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row['Employee Name']}</td>
+                        <td>${row['Month']}</td>
+                        <td>${row['Working Days']}</td>
+                        <td>${row['Leaves']}</td>
+                        <td>${row['Net Working Days']}</td>
+                        <td>${row['Jira Tickets']}</td>
+                        <td>${row['Utilization (%)']}</td>
+                    `;
+                    tbodyAttendance.appendChild(tr);
                 });
+                document.getElementById('dataTable').style.display = 'table';
+            }
+
+            // Handle Capacity data
+            if (data.capacity.length === 0) {
+                alert('No capacity data found for the selected month.');
+                document.getElementById('dataTable1').style.display = 'none';
+                document.getElementById('bandwidth').style.display ='none';
+            } else {
+                data.capacity.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row['Capacity']}</td>
+                        <td>${row['Efforts']}</td>
+                        <td>${row['Utilization']}</td>
+                    `;
+                    tbodyCapacity.appendChild(tr);
+                });
+                document.getElementById('dataTable1').style.display = 'table';
+                document.getElementById('bandwidth').style.display ='block';
+            }
+            
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            alert('An error occurred while fetching data.');
+        });
+    }
+
+    async function fetchCapacityAndEfforts(Month) {
+        try {
+            const response = await fetch(`/fetch-capacity-efforts?Month=${Month}`);
+            console.log("this is response"+response);
+            if (!response.ok) {
+                throw new Error('Error fetching capacity and efforts data');
+            }
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error(error);
+            alert('Failed to fetch capacity and efforts');
         }
+    }
+
+    async function calculate() {
+        // Fetch capacity and efforts for the selected month
+        const Month = document.getElementById('monthSelect').value; 
+        const { capacity, efforts } = await fetchCapacityAndEfforts(Month);
+        console.log("capacity"+capacity);
+
+        if (!capacity || !efforts) {
+            alert('Could not fetch capacity or efforts data');
+            return;
+        }
+
+       // const display = document.getElementById('display');
+        
+        // Get input values
+        const incomingSimple = parseInt(document.getElementById('simple-request').value) || 0;
+        const incomingMedium = parseInt(document.getElementById('medium-request').value) || 0;
+        const incomingComplex = parseInt(document.getElementById('complex-request').value) || 0;
+
+        // Story points per campaign type
+        const simpleStoryPoints = 3;
+        const mediumStoryPoints = 5;
+        const complexStoryPoints = 7;
+
+        // Calculate total story points required for incoming campaigns
+        const totalIncomingPoints = (incomingSimple * simpleStoryPoints) +
+                                    (incomingMedium * mediumStoryPoints) +
+                                    (incomingComplex * complexStoryPoints);
+
+        // Calculate total utilization (efforts + incoming points) as a percentage of capacity
+        const totalUtilizationPercentage = ((efforts + totalIncomingPoints) / capacity) * 100;
+
+        // Determine remaining capacity based on total utilization
+        const remainingCapacity = capacity - (efforts + totalIncomingPoints);
+
+        // Display result
+        const resultDiv = document.getElementById('result');
+        let resultHTML = `
+            <p><b>Total Utilization: ${totalUtilizationPercentage.toFixed(2)}%</b></p>
+            <p class="${remainingCapacity < 0 ? 'error' : ''}"><b>Remaining Capacity: ${remainingCapacity.toFixed(2)} story points</b></p>
+        `;
+        resultDiv.innerHTML = resultHTML;
+        document.getElementById('result').style.display = 'block';
+    }
+
     </script>
 
 </body>

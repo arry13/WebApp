@@ -13,33 +13,72 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/fetch-data', (req, res) => {
     const { Month } = req.query;
 
-    // Define the path to your Excel file
-    const filePath = path.join(__dirname, 'Attendance.xlsx');
-    const filePath1 = path.join(__dirname, 'Capacity.xlsx');
+    // Define paths to your Excel files
+    const filePathAttendance = path.join(__dirname, 'Attendance.xlsx');
+    const filePathCapacity = path.join(__dirname, 'Capacity.xlsx');
 
-    if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ message: 'Excel file not found.' });
-    }
-    if (!fs.existsSync(filePath1)) {
-        return res.status(404).json({ message: 'Excel file not found.' });
+    // Check if files exist
+    if (!fs.existsSync(filePathAttendance) || !fs.existsSync(filePathCapacity)) {
+        return res.status(404).json({ message: 'One or both Excel files not found.' });
     }
 
-    // Read the Excel file
-    const workbook = xlsx.readFile(filePath);
-    const worksheet = workbook.Sheets['Attendance'];
-    const workbook1 = xlsx.readFile(filePath1);
-    const worksheet1 = workbook.Sheets['Capacity'];
+    // Read and parse Attendance.xlsx
+    const workbookAttendance = xlsx.readFile(filePathAttendance);
+    const worksheetAttendance = workbookAttendance.Sheets['Attendance'];
+    const attendanceData = xlsx.utils.sheet_to_json(worksheetAttendance);
 
-    // Convert the worksheet to JSON
-    const data = xlsx.utils.sheet_to_json(worksheet);
-    const data1 = xlsx.utils.sheet_to_json(worksheet1);
-    // Filter data based on the selected month
-    const filteredData = data.filter(row => row.Month === Month);
-    const filteredData1 = data1.filter(row => row.Month === Month);
-    // Return the filtered data as JSON
-    res.json(filteredData);
-    res.json(filteredData1);
+    // Read and parse Capacity.xlsx
+    const workbookCapacity = xlsx.readFile(filePathCapacity);
+    const worksheetCapacity = workbookCapacity.Sheets['Capacity'];
+    const capacityData = xlsx.utils.sheet_to_json(worksheetCapacity);
+
+    // Filter data by month
+    const filteredAttendance = attendanceData.filter(row => row.Month === Month);
+    const filteredCapacity = capacityData.filter(row => row.Month === Month);
+
+    // Send combined data in one response
+    res.json({
+        attendance: filteredAttendance,
+        capacity: filteredCapacity
+    });
 });
+
+app.get('/fetch-capacity-efforts', (req, res) => {
+    console.log("Fetching capacity and efforts..."); 
+    const { Month } = req.query; 
+
+    const filePathCapacity = path.join(__dirname, 'Capacity.xlsx');
+
+    // Check if file exists
+    if (!fs.existsSync(filePathCapacity)) {
+        return res.status(404).json({ message: 'Capacity Excel file not found.' });
+    }
+
+    // Read and parse Capacity.xlsx
+    const workbookCapacity = xlsx.readFile(filePathCapacity);
+    const worksheetCapacity = workbookCapacity.Sheets['Capacity'];
+    const capacityData = xlsx.utils.sheet_to_json(worksheetCapacity);
+
+    // Filter data by month if applicable 
+    const filteredCapacity = capacityData.filter(row => row.Month === Month);
+
+    // If no data found for the given month, return an error
+    if (filteredCapacity.length === 0) {
+        return res.status(404).json({ message: 'No data found for the selected month.' });
+    }
+
+    // Extract efforts and capacity from the filtered data
+    const { capacity, efforts } = filteredCapacity[0];
+
+    // Send efforts and capacity
+    res.json({
+        capacity,
+        efforts
+    });
+});
+
+
+
 
 // Start the server
 app.listen(port, () => {
